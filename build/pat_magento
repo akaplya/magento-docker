@@ -1,0 +1,18 @@
+FROM hub.corp.magento.com/bb-p71
+MAINTAINER Duhon <alugovyi@magento.com>
+
+# Disable unnecessary serevices
+RUN cd /etc/supervisord.d/ && tar --remove-files -cf backup.tar postfix.ini solr.ini rabbit.ini sel.ini
+
+# Install tideways
+RUN echo -e "[tideways]\nname = Tideways\nbaseurl = https://s3-eu-west-1.amazonaws.com/qafoo-profiler/rpm" > /etc/yum.repos.d/tideways.repo \
+    && rpm --import https://s3-eu-west-1.amazonaws.com/qafoo-profiler/packages/EEB5E8F4.gpg \
+    && yum makecache --disablerepo=* --enablerepo=tideways \
+    && yum -y -q --setopt=tsflags=nodocs install tideways-php \
+    && echo 'tideways.auto_prepend_library=0' >> /etc/php.d/40-tideways.ini \
+    && rm /etc/php.d/tideways.ini
+
+# Install redis
+RUN yum -y -q --setopt=tsflags=nodocs install redis \
+    && yum -q clean all \
+    && echo -e '[program:redis]\ncommand=/usr/bin/redis-server /etc/redis.conf\nautostart=true\nautorestart=true\nuser=root\nstdout_logfile=/var/log/redis.log\nredirect_stderr=true' >> /etc/supervisord.d/redis.ini

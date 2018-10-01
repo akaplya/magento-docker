@@ -1,0 +1,42 @@
+FROM ubuntu
+MAINTAINER Duhon <duhon@rambler.ru>
+
+RUN apt-get update && apt-get install -y \
+    php5 \
+    mysql-server-5.6 \
+    mysql-cline-5.6 \
+    nginx
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+ARG username=973634ee674fd3395c1bd5c4c35ee44e
+ARG password=c4d1ba52ddc121d55864c7b1a2e1d269
+RUN echo '{"http-basic":{"repo.magento.com":{"username":"973634ee674fd3395c1bd5c4c35ee44e","password":"c4d1ba52ddc121d55864c7b1a2e1d269"}}}' > ~/.composer/auth.json
+ARG version=2.1.0
+RUN mkdir /var/www/magento2ce && cd /var/www/magento2ce
+RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=$version .
+RUN chmod -R ug+x bin
+
+ARG host=magento.test
+
+RUN bin/magento setup:install \
+   --cleanup-database \
+   --language=en_US \
+   --timezone=Europe/Kiev \
+   --currency=USD \
+   --use-secure=0 \
+   --use-secure-admin=0 \
+   --admin-use-security-key=0 \
+   --use-rewrites=0 \
+   --backend-frontname=admin \
+   --admin-lastname=Admin \
+   --admin-firstname=Admin \
+   --admin-email=admin@ebay.com \
+   --admin-user=admin \
+   --admin-password=123123q \
+   --base-url=http://$host/ \
+   --db-name=magento \
+   --db-host=db
+
+EXPOSE 9000
+CMD ["php-fpm", "-R"]

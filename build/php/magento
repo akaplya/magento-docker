@@ -1,0 +1,31 @@
+FROM php:7.0-fpm
+MAINTAINER Duhon <duhon@rambler.ru>
+
+RUN apt-get update && apt-get install -y \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libmcrypt-dev \
+    libpng12-dev \
+    libicu-dev \
+    libxslt-dev \
+    libgringotts-dev
+
+RUN docker-php-ext-install -j$(nproc) iconv mbstring opcache bcmath mcrypt soap intl zip xsl pdo_mysql
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-mhash \
+    && docker-php-ext-install -j$(nproc) gd
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+ARG username=973634ee674fd3395c1bd5c4c35ee44e
+ARG password=c4d1ba52ddc121d55864c7b1a2e1d269
+RUN echo '{"http-basic":{"repo.magento.com":{"username":"973634ee674fd3395c1bd5c4c35ee44e","password":"c4d1ba52ddc121d55864c7b1a2e1d269"}}}' > ~/.composer/auth.json
+ARG version=2.1.0
+RUN cat ~/.composer/auth.json
+RUN mkdir /var/www/magento2ce && cd /var/www/magento2ce
+RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=$version .
+RUN chmod -R ug+x bin
+
+ARG host=magento.test
+
+EXPOSE 9000
+CMD ["php-fpm", "-R"]

@@ -1,0 +1,23 @@
+version: '2'
+services:
+  db:
+    image: mariadb
+    hostname: db
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: "magento"
+  app:
+    build:
+      context: ..
+      dockerfile: ./build/php/aws
+    hostname: app
+    volumes:
+      - /var/www:/var/www:z
+      - ../etc/php/tools:/usr/local/bin/magento2:ro
+      - ../etc/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ../etc/php/php-fpm.conf:/usr/local/etc/php-fpm.conf
+    environment:
+      COMPOSER_HOME: "/var/www/.composer"
+networks:
+  default:
+    driver: bridge

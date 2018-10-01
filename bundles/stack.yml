@@ -1,0 +1,45 @@
+networks:
+  default:
+    driver: bridge
+services:
+  app:
+    build:
+      context: /home/duhon/docker/magento
+      dockerfile: build/php/Dockerfile
+    hostname: app
+    volumes:
+    - /home/duhon/docker/magento/etc/php/auth.json:/root/.composer/auth.json:ro
+    - /home/duhon/docker/magento/etc/php/config.json:/root/.composer/config.json:ro
+    - /home/duhon/docker/magento/etc/php/tools:/usr/local/bin/magento2:ro
+    - /home/duhon/docker/magento/etc/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini:rw
+    - /home/duhon/docker/magento/etc/php/php.ini:/usr/local/etc/php/php.ini:ro
+    - /home/duhon/docker/magento/etc/php/tests/integration/install-config-mysql.php:/var/www/magento2ce/dev/tests/integration/etc/install-config-mysql.php:rw
+    - /var/www:/var/www:z
+  db:
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: magento
+    hostname: db
+    image: mysql
+    ports:
+    - 3306:3306/tcp
+  web:
+    depends_on:
+    - app
+    hostname: web
+    image: nginx:alpine
+    networks:
+      default:
+        aliases:
+        - magento.test
+    ports:
+    - 443:443/tcp
+    - 80:80/tcp
+    volumes:
+    - /home/duhon/docker/magento/etc/nginx/nginx.conf:/etc/nginx/nginx.conf:rw
+    - /home/duhon/docker/magento/etc/nginx/server.crt:/etc/nginx/server.crt:rw
+    - /home/duhon/docker/magento/etc/nginx/server.key:/etc/nginx/server.key:rw
+    - /var/www:/var/www:rw
+version: '3.0'
+
+

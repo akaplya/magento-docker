@@ -1,0 +1,4 @@
+FROM hub.corp.magento.com/bb-p7-pat-redis
+MAINTAINER Duhon <alugovyi@magento.com>
+
+RUN cd /etc/supervisord.d/ && tar --remove-files -cf backup.tar postfix.ini solr.ini rabbit.ini sel.ini sshd.ini crond.ini
